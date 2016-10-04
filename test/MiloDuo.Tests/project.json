@@ -3,7 +3,6 @@
   "testRunner": "xunit",
   "buildOptions": {
     "debugType": "portable",
-    "emitEntryPoint": true,
     "compilerName": "fsc",
     "compile": {
       "includeFiles": [
