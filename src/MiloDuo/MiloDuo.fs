@@ -3,24 +3,57 @@
 open System
 open System.Text.RegularExpressions
 
+module private String =
+    let Trim (s: string) =
+        s.Trim()
+
+module private Regex =
+    let Split p i =
+        Regex.Split(i, p)
+
+type Span =
+    | Literal of string
+
+let parseLiteral s =
+    [ Literal s ]
+
 type Header =
-    | H1 of string
-    | H2 of string
-    | H3 of string
-    | H4 of string
-    | H5 of string
-    | H6 of string
+    | H1 of Span List
+    | H2 of Span List
+    | H3 of Span List
+    | H4 of Span List
+    | H5 of Span List
+    | H6 of Span List
 
 type Paragraph =
     | Header of Header
-    | Normal of string
+    | Basic of Span List
 
-let parseParagraph (input: string) =
-    match input |> Seq.toList with
-    | '#'::'#'::rest -> rest.ToString() |> H2 |> Header
-    | '#'::rest -> rest.ToString().Trim() |> H1 |> Header
-    | _ -> Normal input
+type Document =
+    | Body of Paragraph List
 
-let parse (input: string) =
-    let paragraphs = Regex.Split(input.Trim(), "\n\n")
-    paragraphs |> Seq.map parseParagraph
+let private parseParagraph i =
+    match i |> Seq.toList with
+    | '#'::'#'::rest -> rest.ToString() |> parseLiteral |> H2 |> Header
+    | '#'::rest -> rest.ToString().Trim() |> parseLiteral |> H1 |> Header
+    | _ -> i |> parseLiteral |> Basic
+
+let parse =
+    String.Trim
+    >> Regex.Split "\n\n"
+    >> Seq.map parseParagraph
+    >> Seq.toList
+    >> Body
+
+let tryCastHeader p =
+    match p with
+    | Header header -> Some header
+    | _ -> None
+
+let tryHead d =
+    match d with
+    | Body paragraphs -> Seq.tryHead paragraphs
+
+let paragraphs d =
+    match d with
+    | Body paragraphs -> paragraphs
