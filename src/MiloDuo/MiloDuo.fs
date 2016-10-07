@@ -14,9 +14,9 @@ module private Regex =
 type Link = string
 type Span =
     | Literal of string
-    | Emphasis of string
-    | Bold of string
-    | Href of Link * string
+    | Emphasis of Span List
+    | Bold of Span List
+    | Href of Link * Span List
 
 
 let appendCharToString = sprintf "%s%c"
@@ -26,34 +26,14 @@ type Result<'T, 'U> =
     | Failure of 'U
 
 let parseLiteral (s : string) =
-
-    let matcher (token : string) tokens currentGroup =
-        let headMatchesToken = tokens |> List.tryHead |> Option.map ((=) token)
-        match token with
-        | "__" ->
-            if headMatchesToken = Some(true) then Success (Emphasis currentGroup, tokens |> List.tail)
-            else Failure (List.Cons (token, tokens))
-        | "**" ->
-            if headMatchesToken = Some(true) then Success (Bold currentGroup, tokens |> List.tail)
-            else Failure (List.Cons (token, tokens))
-        | _ -> Failure tokens
-
-    let rec parseStr (spans : Span List) (tokens : string List) (currentGroup : string) remaining =
+    let rec parseStr (spans : Span List) (tokens : string List) (currentGroup : Span List) remaining =
         match remaining with
-        | '_'::'_'::rest ->
-            let result = matcher "__" tokens currentGroup
-            match result with
-            | Success(span, tokens) -> parseStr (List.Cons (span, spans)) tokens "" rest
-            | Failure(tokens) -> parseStr spans tokens currentGroup rest
-        | '*'::'*'::rest ->
-            let result = matcher "**" tokens currentGroup
-            match result with
-            | Success(span, tokens) -> parseStr (List.Cons (span, spans)) tokens "" rest
-            | Failure(tokens) -> parseStr spans tokens currentGroup rest
-        | head::tail -> parseStr spans tokens (appendCharToString currentGroup head) tail
+        | '_'::'_'::rest -> spans
+        | '*'::'*'::rest -> spans
+        | head::tail -> spans
         | [] -> spans
 
-    parseStr [] [] "" (s |> Seq.toList)
+    parseStr [] [] [] (s |> Seq.toList)
 
 type Header =
     | H1 of Span List
