@@ -8,8 +8,8 @@ module private String =
         s.Trim()
 
 module private Regex =
-    let Split p i =
-        Regex.Split(i, p)
+    let Split pattern string =
+        Regex.Split(string, pattern)
 
 type Link = string
 type Span =
@@ -18,22 +18,26 @@ type Span =
     | Bold of Span List
     | Href of Link * Span List
 
+type SpanType =
+    | Literal
+    | Emphasis
+    | Bold
+    | Href
 
 let appendCharToString = sprintf "%s%c"
 
-type Result<'T, 'U> =
-    | Success of 'T
-    | Failure of 'U
-
 let parseLiteral (s : string) =
-    let rec parseStr (spans : Span List) (tokens : string List) (currentGroup : Span List) remaining =
+    let addToCaptureGroup cg c =
+        (fst cg, c::(snd cg))
+
+    let rec parseStr (spans : Span List) tokens captureGroups remaining =
         match remaining with
         | '_'::'_'::rest -> spans
         | '*'::'*'::rest -> spans
-        | head::tail -> spans
+        | head::tail -> parseStr spans tokens (captureGroups |> Seq.head |> addToCaptureGroup head) tail
         | [] -> spans
 
-    parseStr [] [] [] (s |> Seq.toList)
+    parseStr [] [] (s |> Seq.toList)
 
 type Header =
     | H1 of Span List
