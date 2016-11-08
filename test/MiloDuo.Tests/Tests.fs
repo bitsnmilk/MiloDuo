@@ -46,7 +46,6 @@ let ``Test that it can parse a span``() =
     let actual = "__Hello World__" |> parse
     let expected = Body [ Basic [ Emphasis "Hello World" ] ]
 
-    printfn "%A" actual
     Assert.Equal(actual, expected)
 
 [<Fact>]
@@ -54,5 +53,4 @@ let ``Test that it can parse a bold``() =
     let actual = "**Hello World**" |> parse
     let expected = Body [ Basic [ Bold "Hello World" ] ]
 
-    printfn "%A" actual
     Assert.Equal(actual, expected)
